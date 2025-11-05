@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Виртуальный симулятор отбеливания зубов - посмотрите, как будет выглядеть ваша улыбка после процедуры отбеливания">
+    <title>Симулятор Отбеливания Зубов | Виртуальная Примерка</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            color: #2d3748;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .upload-area {
+            border: 3px dashed #cbd5e0;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+            background: #f7fafc;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #edf2f7;
+            transform: scale(1.02);
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #e6fffa;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .comparison-container {
+            position: relative;
+            display: none;
+            margin: 30px 0;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .comparison-container.active {
+            display: block;
+        }
+
+        .image-wrapper {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            overflow: hidden;
+        }
+
+        #originalCanvas, #whiteningCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        #whiteningCanvas {
+            clip-path: inset(0 50% 0 0);
+        }
+
+        .slider-container {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 4px;
+            height: 100%;
+            background: white;
+            cursor: ew-resize;
+            z-index: 10;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
+
+        .slider-handle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            font-size: 1.2rem;
+        }
+
+        .labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+
+        .label-before {
+            color: #e53e3e;
+        }
+
+        .label-after {
+            color: #38a169;
+        }
+
+        .controls {
+            display: none;
+            gap: 15px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .controls.active {
+            display: flex;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #edf2f7;
+            color: #2d3748;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+            color: white;
+        }
+
+        .intensity-control {
+            display: none;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 10px;
+        }
+
+        .intensity-control.active {
+            display: block;
+        }
+
+        .intensity-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .intensity-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #cbd5e0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .intensity-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .intensity-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #764ba2;
+        }
+
+        .level-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #718096;
+        }
+
+        .cta-section {
+            text-align: center;
+            margin-top: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            color: white;
+        }
+
+        .cta-section h2 {
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+        }
+
+        .cta-section p {
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .btn-cta {
+            background: white;
+            color: #667eea;
+            padding: 18px 40px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-cta:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .disclaimer {
+            margin-top: 30px;
+            padding: 20px;
+            background: #fef5e7;
+            border-left: 4px solid #f39c12;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            color: #856404;
+        }
+
+        .stats {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stats.active {
+            display: grid;
+        }
+
+        .stat-card {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .image-wrapper {
+                height: 300px;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🦷 Симулятор Отбеливания Зубов</h1>
+        <p class="subtitle">Посмотрите, как будет выглядеть ваша улыбка после процедуры</p>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📸</div>
+            <h3>Загрузите фото вашей улыбки</h3>
+            <p>Перетащите файл сюда или нажмите для выбора</p>
+            <p style="font-size: 0.9rem; color: #718096; margin-top: 10px;">
+                Поддерживаются: JPG, PNG (макс. 5MB)
+            </p>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #718096;">Обработка изображения...</p>
+        </div>
+
+        <div class="comparison-container" id="comparisonContainer">
+            <div class="image-wrapper" id="imageWrapper">
+                <canvas id="originalCanvas"></canvas>
+                <canvas id="whiteningCanvas"></canvas>
+                <div class="slider-container" id="sliderContainer">
+                    <div class="slider-handle">⟷</div>
+                </div>
+            </div>
+            <div class="labels">
+                <span class="label-before">ДО</span>
+                <span class="label-after">ПОСЛЕ</span>
+            </div>
+        </div>
+
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="whiteningLevel">0</div>
+                <div class="stat-label">Уровень отбеливания</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="intensityValue">50%</div>
+                <div class="stat-label">Интенсивность</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">⭐⭐⭐⭐⭐</div>
+                <div class="stat-label">Результат</div>
+            </div>
+        </div>
+
+        <div class="intensity-control" id="intensityControl">
+            <div class="intensity-label">
+                <span>Интенсивность отбеливания</span>
+                <span id="intensityPercent">50%</span>
+            </div>
+            <input type="range" min="0" max="100" value="50" class="intensity-slider" id="intensitySlider">
+            <div class="level-indicator">
+                <span>Мягкое</span>
+                <span>Среднее</span>
+                <span>Максимум</span>
+            </div>
+        </div>
+
+        <div class="controls" id="controls">
+            <button class="btn btn-primary" id="whiteningBtn">
+                ✨ Отбелить Зубы
+            </button>
+            <button class="btn btn-secondary" id="resetBtn">
+                🔄 Сбросить
+            </button>
+            <button class="btn btn-success" id="downloadBtn">
+                💾 Скачать Результат
+            </button>
+        </div>
+
+        <div class="cta-section">
+            <h2>Готовы к настоящему преображению?</h2>
+            <p>Получите профессиональную консультацию и узнайте о наших программах отбеливания</p>
+            <button class="btn-cta" onclick="window.parent.postMessage('openBooking', '*')">
+                📅 Записаться на Консультацию
+            </button>
+        </div>
+
+        <div class="disclaimer">
+            <strong>⚠️ Важно:</strong> Это виртуальный симулятор для демонстрации возможного результата. 
+            Фактический результат отбеливания зависит от индивидуальных особенностей зубов и может отличаться. 
+            Для получения точной оценки запишитесь на консультацию к специалисту.
+        </div>
+    </div>
+
+    <script>
+        // Конфигурация
+        const CONFIG = {
+            maxFileSize: 5 * 1024 * 1024, // 5MB
+            maxWhiteningLevel: 5,
+            baseWhiteningIntensity: 0.3
+        };
+
+        // Состояние приложения
+        const state = {
+            originalImage: null,
+            currentLevel: 0,
+            intensity: 50,
+            sliderPosition: 50
+        };
+
+        // Элементы DOM
+        const elements = {
+            uploadArea: document.getElementById('uploadArea'),
+            fileInput: document.getElementById('fileInput'),
+            loading: document.getElementById('loading'),
+            comparisonContainer: document.getElementById('comparisonContainer'),
+            originalCanvas: document.getElementById('originalCanvas'),
+            whiteningCanvas: document.getElementById('whiteningCanvas'),
+            sliderContainer: document.getElementById('sliderContainer'),
+            imageWrapper: document.getElementById('imageWrapper'),
+            controls: document.getElementById('controls'),
+            intensityControl: document.getElementById('intensityControl'),
+            stats: document.getElementById('stats'),
+            whiteningBtn: document.getElementById('whiteningBtn'),
+            resetBtn: document.getElementById('resetBtn'),
+            downloadBtn: document.getElementById('downloadBtn'),
+            intensitySlider: document.getElementById('intensitySlider'),
+            intensityPercent: document.getElementById('intensityPercent'),
+            whiteningLevel: document.getElementById('whiteningLevel'),
+            intensityValue: document.getElementById('intensityValue')
+        };
+
+        // Инициализация обработчиков событий
+        function initEventListeners() {
+            // Загрузка файла
+            elements.uploadArea.addEventListener('click', () => elements.fileInput.click());
+            elements.fileInput.addEventListener('change', handleFileSelect);
+
+            // Drag & Drop
+            elements.uploadArea.addEventListener('dragover', handleDragOver);
+            elements.uploadArea.addEventListener('dragleave', handleDragLeave);
+            elements.uploadArea.addEventListener('drop', handleDrop);
+
+            // Кнопки управления
+            elements.whiteningBtn.addEventListener('click', applyWhitening);
+            elements.resetBtn.addEventListener('click', resetImage);
+            elements.downloadBtn.addEventListener('click', downloadResult);
+
+            // Слайдер сравнения
+            let isDragging = false;
+            elements.sliderContainer.addEventListener('mousedown', () => isDragging = true);
+            document.addEventListener('mouseup', () => isDragging = false);
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) updateSliderPosition(e);
+            });
+
+            // Мобильная версия слайдера
+            elements.sliderContainer.addEventListener('touchstart', () => isDragging = true);
+            document.addEventListener('touchend', () => isDragging = false);
+            document.addEventListener('touchmove', (e) => {
+                if (isDragging) updateSliderPosition(e.touches[0]);
+            });
+
+            // Слайдер интенсивности
+            elements.intensitySlider.addEventListener('input', handleIntensityChange);
+        }
+
+        // Обработка выбора файла
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) processFile(file);
+        }
+
+        // Обработка Drag & Drop
+        function handleDragOver(e) {
+            e.preventDefault();
+            elements.uploadArea.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            elements.uploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            elements.uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) processFile(file);
+        }
+
+        // Обработка файла
+        function processFile(file) {
+            // Валидация
+            if (!file.type.startsWith('image/')) {
+                alert('❌ Пожалуйста, загрузите файл изображения');
+                return;
+            }
+
+            if (file.size > CONFIG.maxFileSize) {
+                alert('❌ Файл слишком большой. Максимальный размер: 5MB');
+                return;
+            }
+
+            // Показать загрузку
+            elements.loading.classList.add('active');
+
+            // Загрузка изображения
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    state.originalImage = img;
+                    state.currentLevel = 0;
+                    initializeCanvases(img);
+                    showComparison();
+                    elements.loading.classList.remove('active');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Инициализация канвасов
+        function initializeCanvases(img) {
+            const maxWidth = elements.imageWrapper.clientWidth;
+            const maxHeight = 500;
+            let width = img.width;
+            let height = img.height;
+
+            // Масштабирование с сохранением пропорций
+            if (width > maxWidth) {
+                height = (height * maxWidth) / width;
+                width = maxWidth;
+            }
+            if (height > maxHeight) {
+                width = (width * maxHeight) / height;
+                height = maxHeight;
+            }
+
+            // Настройка канвасов
+            [elements.originalCanvas, elements.whiteningCanvas].forEach(canvas => {
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+            });
+
+            elements.imageWrapper.style.height = height + 'px';
+        }
+
+        // Показать режим сравнения
+        function showComparison() {
+            elements.comparisonContainer.classList.add('active');
+            elements.controls.classList.add('active');
+            elements.intensityControl.classList.add('active');
+            elements.stats.classList.add('active');
+            updateStats();
+        }
+
+        // Применение отбеливания
+        function applyWhitening() {
+            if (!state.originalImage || state.currentLevel >= CONFIG.maxWhiteningLevel) {
+                if (state.currentLevel >= CONFIG.maxWhiteningLevel) {
+                    alert('✨ Достигнут максимальный уровень отбеливания!');
+                }
+                return;
+            }
+
+            state.currentLevel++;
+            const intensity = CONFIG.baseWhiteningIntensity * (state.intensity / 50);
+            
+            const canvas = elements.whiteningCanvas;
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+
+            // Алгоритм отбеливания
+            for (let i = 0; i < data.length; i += 4) {
+                // Увеличиваем яркость
+                data[i] = Math.min(255, data[i] * (1 + intensity));     // R
+                data[i + 1] = Math.min(255, data[i + 1] * (1 + intensity)); // G
+                data[i + 2] = Math.min(255, data[i + 2] * (1 + intensity)); // B
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+            updateStats();
+
+            // Анимация кнопки
+            elements.whiteningBtn.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                elements.whiteningBtn.style.transform = 'scale(1)';
+            }, 100);
+
+            // Отключить кнопку если достигнут максимум
+            if (state.currentLevel >= CONFIG.maxWhiteningLevel) {
+                elements.whiteningBtn.disabled = true;
+                elements.whiteningBtn.textContent = '✅ Максимум достигнут';
+            }
+        }
+
+        // Сброс к оригиналу
+        function resetImage() {
+            if (!state.originalImage) return;
+
+            state.currentLevel = 0;
+            const ctx = elements.whiteningCanvas.getContext('2d');
+            ctx.drawImage(state.originalImage, 0, 0, elements.whiteningCanvas.width, elements.whiteningCanvas.height);
+            
+            elements.whiteningBtn.disabled = false;
+            elements.whiteningBtn.textContent = '✨ Отбелить Зубы';
+            updateStats();
+        }
+
+        // Обновление позиции слайдера
+        function updateSliderPosition(e) {
+            const rect = elements.imageWrapper.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
+            
+            state.sliderPosition = percentage;
+            elements.sliderContainer.style.left = percentage + '%';
+            elements.whiteningCanvas.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
+        }
+
+        // Обработка изменения интенсивности
+        function handleIntensityChange(e) {
+            state.intensity = e.target.value;
+            elements.intensityPercent.textContent = state.intensity + '%';
+            updateStats();
+        }
+
+        // Обновление статистики
+        function updateStats() {
+            elements.whiteningLevel.textContent = state.currentLevel;
+            elements.intensityValue.textContent = state.intensity + '%';
+        }
+
+        // Скачать результат
+        function downloadResult() {
+            if (!state.originalImage) return;
+
+            const canvas = elements.whiteningCanvas;
+            canvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `whitened_smile_${Date.now()}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+        }
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', initEventListeners);
+    </script>
+</body>
+</html>
