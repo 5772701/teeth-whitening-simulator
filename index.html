@@ -113,7 +113,7 @@
         }
 
         #whiteningCanvas {
-            clip-path: inset(0 50% 0 0);
+            clip-path: inset(0 0 0 50%); /* Обрезает 50% слева */
         }
 
         .slider-container {
@@ -710,7 +710,7 @@
             
             state.sliderPosition = percentage;
             elements.sliderContainer.style.left = percentage + '%';
-            elements.whiteningCanvas.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
+            elements.whiteningCanvas.style.clipPath = `inset(0 0 0 ${percentage}%)`;
         }
 
         // Обработка изменения интенсивности
