@@ -663,7 +663,7 @@
                 const [h, s, l] = rgbToHsl(data[i], data[i+1], data[i+2]);
 
                 const hue = h * 360;
-                if (l > 0.4 && s > 0.1 && hue > 25 && hue < 60) {
+                if (l > 0.6 && s < 0.24 && hue > 40 && hue < 55) {
                     const newL = Math.min(1, l + (0.15 * intensity));
                     const newS = Math.max(0, s - (0.25 * intensity));
                     const [newR, newG, newB] = hslToRgb(h, newS, newL);
