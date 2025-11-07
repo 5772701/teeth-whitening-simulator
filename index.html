@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+F<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -663,7 +663,7 @@
                 const [h, s, l] = rgbToHsl(data[i], data[i+1], data[i+2]);
 
                 const hue = h * 360;
-                if (l > 0.6 && s < 0.24 && hue > 40 && hue < 55) {
+                if (l > 0.5 && s < 0.5 && hue > 35 && hue < 60) {
                     const newL = Math.min(1, l + (0.15 * intensity));
                     const newS = Math.max(0, s - (0.25 * intensity));
                     const [newR, newG, newB] = hslToRgb(h, newS, newL);
