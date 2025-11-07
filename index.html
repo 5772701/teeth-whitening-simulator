@@ -602,8 +602,8 @@
                 img.onload = () => {
                     state.originalImage = img;
                     state.currentLevel = 0;
-                    initializeCanvases(img);
-                    showComparison();
+                    showComparison();        // <-- Сначала делаем контейнер видимым
+                    initializeCanvases(img); // <-- А потом инициализируем холст
                     elements.loading.classList.remove('active');
                 };
                 img.src = e.target.result;
@@ -648,7 +648,7 @@
             updateStats();
         }
 
-        // Применение отбеливания
+// Применение отбеливания (УЛУЧШЕННАЯ ВЕРСИЯ)
         function applyWhitening() {
             if (!state.originalImage || state.currentLevel >= CONFIG.maxWhiteningLevel) {
                 if (state.currentLevel >= CONFIG.maxWhiteningLevel) {
@@ -665,24 +665,38 @@
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
 
-            // Алгоритм отбеливания
+            // Улучшенный алгоритм отбеливания, который нацелен на зубы
             for (let i = 0; i < data.length; i += 4) {
-                // Увеличиваем яркость
-                data[i] = Math.min(255, data[i] * (1 + intensity));     // R
-                data[i + 1] = Math.min(255, data[i + 1] * (1 + intensity)); // G
-                data[i + 2] = Math.min(255, data[i + 2] * (1 + intensity)); // B
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+
+                // 1. Проверяем, что пиксель достаточно яркий и имеет желтоватый оттенок
+                // Это помогает отделить зубы от темных участков и губ
+                const brightness = (r + g + b) / 3;
+                if (brightness > 80 && r > b && g > b) {
+                    
+                    // 2. Увеличиваем яркость пикселя
+                    const newR = Math.min(255, r * (1 + intensity));
+                    const newG = Math.min(255, g * (1 + intensity));
+                    
+                    // 3. Снижаем желтизну, немного увеличивая синий канал
+                    const newB = Math.min(255, b * (1 + intensity * 0.8));
+
+                    data[i] = newR;
+                    data[i + 1] = newG;
+                    data[i + 2] = newB;
+                }
             }
 
             ctx.putImageData(imageData, 0, 0);
             updateStats();
 
-            // Анимация кнопки
             elements.whiteningBtn.style.transform = 'scale(0.95)';
             setTimeout(() => {
                 elements.whiteningBtn.style.transform = 'scale(1)';
             }, 100);
 
-            // Отключить кнопку если достигнут максимум
             if (state.currentLevel >= CONFIG.maxWhiteningLevel) {
                 elements.whiteningBtn.disabled = true;
                 elements.whiteningBtn.textContent = '✅ Максимум достигнут';
